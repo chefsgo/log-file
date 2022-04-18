@@ -1,2 +1,4 @@
 # log-file
-chef-go default file driver.
+
+chef-go file log driver
+
