@@ -1,4 +1,4 @@
 # log-file
 
-chef-go file log driver
+chefsgo file log driver
 

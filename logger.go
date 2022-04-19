@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chef-go/chef"
-	"github.com/chef-go/util"
+	"github.com/chefsgo/chef"
+	"github.com/chefsgo/util"
 )
 
 type (

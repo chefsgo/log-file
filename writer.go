@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chef-go/chef"
+	"github.com/chefsgo/chef"
 )
 
 // FileWriter
