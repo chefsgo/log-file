@@ -58,7 +58,7 @@ func (fw *FileWriter) init() error {
 }
 
 // write by config
-func (fw *FileWriter) write(log chef.Log) error {
+func (fw *FileWriter) write(log *chef.Log) error {
 
 	fw.lock.Lock()
 	defer fw.lock.Unlock()

@@ -137,7 +137,7 @@ func (connect *fileLogConnect) Close() error {
 // Write 写日志
 // 可以考虑换成封闭好的协程库来执行并行任务
 // 老代码搬运，暂时先这样
-func (connect *fileLogConnect) Write(log chef.Log) error {
+func (connect *fileLogConnect) Write(log *chef.Log) error {
 	var accessChan = make(chan error, 1)
 	var levelChan = make(chan error, 1)
 
