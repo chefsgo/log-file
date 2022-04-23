@@ -7,12 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/chefsgo/chef"
+	"github.com/chefsgo/log"
 )
 
 // FileWriter
 type FileWriter struct {
-	connect   *fileLogConnect
+	connect   *fileConnect
 	lock      sync.RWMutex
 	writer    *os.File
 	startLine int64
@@ -21,7 +21,7 @@ type FileWriter struct {
 }
 
 // newFileWriter
-func newFileWriter(c *fileLogConnect, fn string) *FileWriter {
+func newFileWriter(c *fileConnect, fn string) *FileWriter {
 	return &FileWriter{
 		connect: c, filename: fn,
 	}
@@ -58,7 +58,7 @@ func (fw *FileWriter) init() error {
 }
 
 // write by config
-func (fw *FileWriter) write(log *chef.Log) error {
+func (fw *FileWriter) write(log *log.Log) error {
 
 	fw.lock.Lock()
 	defer fw.lock.Unlock()

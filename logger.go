@@ -6,25 +6,25 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chefsgo/chef"
+	"github.com/chefsgo/log"
 	"github.com/chefsgo/util"
 )
 
 type (
-	fileLogDriver struct {
+	fileDriver struct {
 		//store 驱动默认的存储路径
 		store string
 	}
-	fileLogConnect struct {
-		config  chef.LogConfig
-		setting fileLogSetting
-		writers map[chef.LogLevel]*FileWriter
+	fileConnect struct {
+		config  log.Config
+		setting fileSetting
+		writers map[log.Level]*FileWriter
 	}
-	fileLogSetting struct {
+	fileSetting struct {
 		//File 默认日志文件
 		File string
 		//LevelFiles 不同级别的日志文件
-		LevelFiles map[chef.LogLevel]string
+		LevelFiles map[log.Level]string
 		// MaxSize 日志文件最大尺寸
 		MaxSize int64
 		//MaxLine 日志文件最大行
@@ -36,7 +36,7 @@ type (
 	}
 )
 
-func (driver *fileLogDriver) Connect(config chef.LogConfig) (chef.LogConnect, error) {
+func (driver *fileDriver) Connect(config log.Config) (log.Connect, error) {
 	//默认路径
 	store := driver.store
 	if vv, ok := config.Setting["store"].(string); ok && vv != "" {
@@ -50,14 +50,14 @@ func (driver *fileLogDriver) Connect(config chef.LogConfig) (chef.LogConnect, er
 	}
 
 	// 默认setting
-	setting := fileLogSetting{
-		LevelFiles: make(map[chef.LogLevel]string, 0),
+	setting := fileSetting{
+		LevelFiles: make(map[log.Level]string, 0),
 		MaxSize:    1024 * 1024 * 100,
 		MaxLine:    1000000,
 		DateSlice:  "day",
 	}
 
-	levels := chef.LogLevels()
+	levels := log.Levels()
 	for level, name := range levels {
 		key := strings.ToLower(name)
 		file := key + ".log"
@@ -99,15 +99,15 @@ func (driver *fileLogDriver) Connect(config chef.LogConfig) (chef.LogConnect, er
 		setting.DateSlice = checkSlice(vv)
 	}
 
-	return &fileLogConnect{
+	return &fileConnect{
 		config: config, setting: setting,
 	}, nil
 }
 
 //打开连接
-func (connect *fileLogConnect) Open() error {
+func (connect *fileConnect) Open() error {
 
-	writers := make(map[chef.LogLevel]*FileWriter, 0)
+	writers := make(map[log.Level]*FileWriter, 0)
 	if len(connect.setting.LevelFiles) > 0 {
 		for level, filename := range connect.setting.LevelFiles {
 			writer := newFileWriter(connect, filename)
@@ -127,7 +127,7 @@ func (connect *fileLogConnect) Open() error {
 }
 
 //关闭连接
-func (connect *fileLogConnect) Close() error {
+func (connect *fileConnect) Close() error {
 	//为了最后一条日志能正常输出，延迟一小会
 	time.Sleep(time.Microsecond * 100)
 	connect.Flush()
@@ -137,7 +137,7 @@ func (connect *fileLogConnect) Close() error {
 // Write 写日志
 // 可以考虑换成封闭好的协程库来执行并行任务
 // 老代码搬运，暂时先这样
-func (connect *fileLogConnect) Write(log *chef.Log) error {
+func (connect *fileConnect) Write(msg *log.Log) error {
 	var accessChan = make(chan error, 1)
 	var levelChan = make(chan error, 1)
 
@@ -148,7 +148,7 @@ func (connect *fileLogConnect) Write(log *chef.Log) error {
 				accessChan <- nil
 				return
 			}
-			err := accessFileWrite.write(log)
+			err := accessFileWrite.write(msg)
 			if err != nil {
 				accessChan <- err
 				return
@@ -159,12 +159,12 @@ func (connect *fileLogConnect) Write(log *chef.Log) error {
 
 	if len(connect.setting.LevelFiles) != 0 {
 		go func() {
-			fileWrite, ok := connect.writers[log.Level]
+			fileWrite, ok := connect.writers[msg.Level]
 			if !ok {
 				levelChan <- nil
 				return
 			}
-			err := fileWrite.write(log)
+			err := fileWrite.write(msg)
 			if err != nil {
 				levelChan <- err
 				return
@@ -190,7 +190,7 @@ func (connect *fileLogConnect) Write(log *chef.Log) error {
 	return nil
 }
 
-func (connect *fileLogConnect) Flush() {
+func (connect *fileConnect) Flush() {
 	for _, writer := range connect.writers {
 		writer.writer.Close()
 	}
